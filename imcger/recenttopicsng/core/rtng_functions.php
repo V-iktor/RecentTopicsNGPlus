@@ -156,10 +156,13 @@ class rtng_functions
 			]);
 		}
 
-		// Restrict to the forums (and their subforums) selected for this section
-		if (count($section['forums']))
+		// Restrict to the forums (and their subforums) selected for this section.
+		// When none of the selected forums exists anymore, the section shows all
+		// forums, the same as a section without selected forums.
+		$section_forum_ids = count($section['forums']) ? $this->get_section_forum_ids($section['forums']) : [];
+		if (count($section_forum_ids))
 		{
-			$forum_id_list = array_values(array_intersect($forum_id_list, $this->get_section_forum_ids($section['forums'])));
+			$forum_id_list = array_values(array_intersect($forum_id_list, $section_forum_ids));
 		}
 
 		// No forums to display
@@ -168,7 +171,8 @@ class rtng_functions
 			return;
 		}
 
-		$rtng_start = $this->request->variable($start_param, 0);
+		// Links of versions without sections use "rtng_topics_start" for the first section
+		$rtng_start = $this->request->variable($start_param, $section['id'] == 1 ? $this->request->variable('rtng_topics_start', 0) : 0);
 
 		// limit number of pages to be shown
 		// compute as product of topics per page and max number of pages.
@@ -332,15 +336,24 @@ class rtng_functions
 		{
 			// Get allowed topics
 			$sql_array = $this->get_allowed_topics_sql($excluded_topics, $min_topic_level, $forum_id_list);
-			$count_sql_array = $sql_array;
-			$count_sql_array['SELECT'] = 'COUNT(t.topic_id) as topic_count';
-			unset($count_sql_array['ORDER_BY']);
-			unset($count_sql_array['LEFT_JOIN']);
-			$sql = $this->db->sql_build_query('SELECT', $count_sql_array);
 
-			$result = $this->db->sql_query($sql);
-			$topics_count = (int) $this->db->sql_fetchfield('topic_count');
-			$this->db->sql_freeresult($result);
+			// When all topics are shown, the limit is already the number of topics
+			if ((int) $this->config['rtng_all_topics'])
+			{
+				$topics_count = $total_topics_limit;
+			}
+			else
+			{
+				$count_sql_array = $sql_array;
+				$count_sql_array['SELECT'] = 'COUNT(t.topic_id) as topic_count';
+				unset($count_sql_array['ORDER_BY']);
+				unset($count_sql_array['LEFT_JOIN']);
+				$sql = $this->db->sql_build_query('SELECT', $count_sql_array);
+
+				$result = $this->db->sql_query($sql);
+				$topics_count = (int) $this->db->sql_fetchfield('topic_count');
+				$this->db->sql_freeresult($result);
+			}
 
 			//load topics list
 			$sql = $this->db->sql_build_query('SELECT', $sql_array);

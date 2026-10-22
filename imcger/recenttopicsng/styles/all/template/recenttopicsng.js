@@ -31,14 +31,60 @@ jQuery(
 
 		var currentSearch = window.location.search;
 
+		// Running request per section, an older request is aborted by a newer one
+		var pendingRequests = {};
+
+		// Bind the event handlers of phpBB and other extensions to a loaded section
+		var initSection = function($section) {
+			// Ajax links (e.g. collapsible categories)
+			$section.find('[data-ajax]').each(function() {
+				var $this = $(this);
+				var ajax = $this.attr('data-ajax');
+				var filter = $this.attr('data-filter');
+
+				if (ajax !== 'false') {
+					phpbb.ajaxify({
+						selector: this,
+						refresh: $this.attr('data-refresh') !== undefined,
+						filter: (filter !== undefined) ? phpbb.getFunctionByName(filter) : null,
+						callback: (ajax !== 'true') ? ajax : null
+					});
+				}
+			});
+
+			// Page jump dropdown
+			$section.find('.dropdown-container').each(function() {
+				var $this = $(this);
+				phpbb.registerDropdown($this.find('.dropdown-trigger:first'), $this.find('.dropdown'), {
+					direction: 'auto',
+					verticalDirection: 'auto'
+				});
+			});
+
+			if (typeof parseDocument === 'function') {
+				parseDocument($section);
+			}
+
+			$(document).trigger('rtng_section_loaded', [$section]);
+		};
+
 		var loadSections = function(url, sectionIds) {
-			var $sections = $(sectionIds.map(function(id) {
-				return '#rtng-section-' + id;
-			}).join(','));
+			var controller = window.AbortController ? new AbortController() : null;
 
-			$sections.addClass('rtng-loading');
+			sectionIds.forEach(function(id) {
+				if (pendingRequests[id] && pendingRequests[id].abort) {
+					pendingRequests[id].abort();
+				}
+				pendingRequests[id] = controller || {};
+				$('#rtng-section-' + id).addClass('rtng-loading');
+			});
 
-			return fetch(url, {credentials: 'same-origin'})
+			var request = pendingRequests[sectionIds[0]];
+			var isCurrent = function(id) {
+				return pendingRequests[id] === request;
+			};
+
+			return fetch(url, {credentials: 'same-origin', signal: controller ? controller.signal : undefined})
 				.then(function(response) {
 					if (!response.ok) {
 						throw new Error(response.statusText);
@@ -47,45 +93,41 @@ jQuery(
 				})
 				.then(function(html) {
 					var doc = new DOMParser().parseFromString(html, 'text/html');
+					var currentIds = sectionIds.filter(isCurrent);
 
-					sectionIds.forEach(function(id) {
-						var newSection = doc.getElementById('rtng-section-' + id);
-						var $oldSection = $('#rtng-section-' + id);
+					// The page has no longer this section (e.g. session expired), load it the normal way
+					if (currentIds.some(function(id) { return !doc.getElementById('rtng-section-' + id); })) {
+						window.location.href = url;
+						return;
+					}
 
-						if (newSection && $oldSection.length) {
-							var $newSection = $(document.importNode(newSection, true));
-							$oldSection.replaceWith($newSection);
+					currentIds.forEach(function(id) {
+						var $newSection = $(document.importNode(doc.getElementById('rtng-section-' + id), true));
 
-							// Rebind ajax links (e.g. collapsible categories)
-							$newSection.find('[data-ajax]').each(function() {
-								var $this = $(this);
-								var ajax = $this.attr('data-ajax');
-								var filter = $this.attr('data-filter');
+						delete pendingRequests[id];
+						$('#rtng-section-' + id).replaceWith($newSection);
 
-								if (ajax !== 'false') {
-									phpbb.ajaxify({
-										selector: this,
-										refresh: $this.attr('data-refresh') !== undefined,
-										filter: (filter !== undefined) ? phpbb.getFunctionByName(filter) : null,
-										callback: (ajax !== 'true') ? ajax : null
-									});
-								}
+						// Errors of other scripts must not stop the remaining sections
+						try {
+							initSection($newSection);
+						} catch (err) {
+							setTimeout(function() {
+								throw err;
 							});
-
-							$(document).trigger('rtng_section_loaded', [$newSection]);
 						}
 					});
-				})
-				.catch(function() {
+				}, function(err) {
+					// Aborted by a newer request
+					if (err && err.name === 'AbortError') {
+						return;
+					}
+
 					// Fall back to a normal page load
 					window.location.href = url;
-				})
-				.finally(function() {
-					$sections.removeClass('rtng-loading');
 				});
 		};
 
-		$(document).on('click', '.rtng-section .rtng-pagination a[href]', function(e) {
+		$(document).on('click', '.rtng-section .rtng-pagination > ul > li:not(.page-jump) > a[href]', function(e) {
 			var $section = $(this).closest('.rtng-section');
 			var param = $section.attr('data-rtng-param');
 			var sectionId = $section.attr('data-rtng-section');

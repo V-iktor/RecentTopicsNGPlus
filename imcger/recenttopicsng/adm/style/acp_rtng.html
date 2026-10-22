@@ -92,12 +92,12 @@
 
 		<div id="rtng_section_list">
 			{% for section in rtng_sections %}
-				{{ _self.section(section.ID, section.TITLE, section.forums) }}
+				{{ _self.section(section.ID, section.TITLE, rtng_forum_options, section.FORUM_IDS) }}
 			{% endfor %}
 		</div>
 
 		<template id="rtng_section_template">
-			{{ _self.section('__ID__', '', rtng_forum_options) }}
+			{{ _self.section('__ID__', '', rtng_forum_options, []) }}
 		</template>
 
 		<p>
@@ -160,7 +160,7 @@
 	</div>
 {%- endmacro %}
 
-{% macro section(id, title, forums) -%}
+{% macro section(id, title, forums, selected) -%}
 	<div class="rtng-section-row" data-id="{{ id }}">
 		<hr>
 		<dl>
@@ -182,7 +182,7 @@
 					{% for forum in forums %}
 						<option value="{{ forum.FORUM_ID }}"{{
 							(forum.S_IS_CAT ? ' class="sep"') ~
-							(forum.S_SELECTED ? ' selected')
+							(forum.FORUM_ID in selected ? ' selected')
 						}}>{{ forum.PADDING }}{{ forum.FORUM_NAME }}</option>
 					{% endfor %}
 				</select>
