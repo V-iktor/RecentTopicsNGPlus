@@ -19,7 +19,7 @@ class rtng_functions
 	 * Sections with up to this number of topics load all their topics at once
 	 * and are paginated in the browser without further requests
 	 */
-	const CLIENT_PAGINATION_MAX_TOPICS = 100;
+	const CLIENT_PAGINATION_MAX_TOPICS = 50;
 
 	private array $user_setting;
 	private int $topics_start;

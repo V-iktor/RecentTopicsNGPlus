@@ -2,6 +2,8 @@
 ## Core Events
 ---
 
+> **Note (since 1.3.0):** Recent topics are displayed in sections, and the events below are triggered once per section. Sections with up to 50 topics (topics per page × number of pages) load the topics of **all** their pages at once for client side pagination. For those sections `modify_topics_list`, `modify_tpl_ary` and `topic_row_after` include or run for the topics of all pages, not only the visible page. Keep per-topic work in these events cheap, e.g. load data for the whole `topic_list` in `modify_topics_list` instead of querying in `topic_row_after`.
+
 ### `imcger.recenttopicsng.sql_pull_topics_list`
 * Description: Event to modify the SQL query before the allowed topics list data is retrieved
 * Placement: imcger\recenttopicsng\core\rtng_functions\get_allowed_topics_sql
@@ -44,7 +46,7 @@
 * Arguments:
   - @var   string  disp_topic_title Post in Topic title. first, last or first unread post
   - @var   array   row                 Array with topic data
-  - @var   array   tpl_ary             Template block array with topic data
+  - @var   array   tpl_ary             Template block array with topic data. Since 1.3.0 with `LIST_PAGE` (page of the topic in the list) and `S_LIST_HIDDEN` (topic is not on the displayed page)
   - @var   bool    s_type_switch       Flag indicating if the topic type is [global] announcement
   - @var   bool    s_type_switch_test  Flag indicating if the test topic type is [global] announcement
 
@@ -58,7 +60,7 @@
   - @var   array   rowset         Array with topics data
   - @var   bool    s_type_switch  Flag indicating if the topic type is [global] announcement
   - @var   int     topic_id       The topic ID
-  - @var   array   topic_list     Array with current recent topics page topic ids
+  - @var   array   topic_list     Array with the topic ids of the current page, or of all pages for sections with client side pagination (since 1.3.0)
   - @var   array   tpl_ary        Template array with topic data
 
 ---

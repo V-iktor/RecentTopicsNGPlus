@@ -12,7 +12,7 @@
 
 {% if S_RTNG_LOCATION_SIDE %}
 	{% for section in rtng_sections %}
-	<div class="rtng-section" id="rtng-section-{{ section.ID }}" data-rtng-section="{{ section.ID }}" data-rtng-param="{{ section.START_PARAM }}"{% if section.S_CLIENT_PAGINATION %} data-rtng-client="1" data-rtng-per-page="{{ section.PER_PAGE }}" data-rtng-total-pages="{{ section.TOTAL_PAGES }}"{% endif %}>
+	<div class="rtng-section" id="rtng-section-{{ section.ID }}" data-rtng-section="{{ section.ID }}" data-rtng-param="{{ section.START_PARAM }}"{% if section.S_CLIENT_PAGINATION %} data-rtng-client="1" data-rtng-per-page="{{ section.PER_PAGE }}" data-rtng-total-pages="{{ section.TOTAL_PAGES }}" data-rtng-current-page="{{ section.CURRENT_PAGE }}"{% endif %}>
 		<div class="forabg rtng-box">
 			<div class="inner">
 				<ul class="topiclist">

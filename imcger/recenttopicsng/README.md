@@ -3,7 +3,7 @@
 ### Description
 Extension for phpBB - Adds a list with a number of recent topics to the board index. They can be displayed at the top, bottom or side of the page. You can also display the recent topics on a separate page. The first, last or last unread posts can be displayed in the topic list. The settings in the UCP and the user administration are displayed depending on the user permission.
 
-The list can be split into several **sections**. Each section has its own title, shows the topics of selected forums or categories, and has its own page links. The topics of all pages of a section are loaded with the page, so changing the page of a section is instant and needs no request to the server. Only sections with more than 100 topics (e.g. with “Show all recent topic pages” enabled) load the other pages from the server, again without reloading the whole page.
+The list can be split into several **sections**. Each section has its own title, shows the topics of selected forums or categories, and has its own page links. The topics of all pages of a section are loaded with the page, so changing the page of a section is instant and needs no request to the server. Only sections with more than 50 topics (e.g. with “Show all recent topic pages” enabled) load the other pages from the server, again without reloading the whole page.
 
 Based on NV Recent Topics for phpBB 3.0, by Joas Schilling ([nickvergessen](https://github.com/nickvergessen))
 

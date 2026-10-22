@@ -180,7 +180,7 @@ jQuery(
 				if ((atPage === 2 && startPage > 2) || (atPage === totalPages - 1 && endPage < totalPages - 1)) {
 					items.push($('<li class="ellipsis" role="separator"></li>').append($('<span></span>').text($pagination.attr('data-lang-ellipsis'))));
 				} else if (atPage === onPage) {
-					items.push($('<li class="active"></li>').append($('<span></span>').text(atPage)));
+					items.push($('<li class="active"></li>').append($('<span tabindex="-1" aria-current="page"></span>').text(atPage)));
 				} else {
 					items.push($('<li></li>').append(link(atPage).text(atPage)));
 				}
@@ -227,9 +227,18 @@ jQuery(
 			$section.find('.rtng-pagination').each(function() {
 				var $pagination = $(this);
 				var $list = $pagination.children('ul');
+				var focused = document.activeElement;
+				var hadFocus = $.contains($list.get(0), focused) && !$(focused).closest('.page-jump').length;
+				var focusedRel = hadFocus ? focused.getAttribute('rel') : null;
 
 				$list.children('li:not(.page-jump)').remove();
 				$list.append(buildPageLinks($pagination, param, perPage, totalPages, page));
+
+				// Keep the keyboard focus in the page links
+				if (hadFocus) {
+					var $target = focusedRel ? $list.find('a[rel="' + focusedRel + '"]') : $();
+					($target.length ? $target : $list.find('li.active > span')).trigger('focus');
+				}
 			});
 
 			return page;
@@ -260,20 +269,40 @@ jQuery(
 			}
 		};
 
-		$(document).on('click', '.rtng-section .rtng-pagination > ul > li:not(.page-jump) > a[href]', function(e) {
+		var pageLinks = '.rtng-section .rtng-pagination > ul > li:not(.page-jump) > a[href]';
+
+		// Start value of the link's own section. The start values of all other
+		// sections in the link may be outdated, the current URL has the right ones.
+		var linkStart = function(link) {
+			var param = $(link).closest('.rtng-section').attr('data-rtng-param');
+			return parseInt(new URL(link.href, window.location.href).searchParams.get(param), 10) || 0;
+		};
+
+		// Base the link on the current URL before it is opened in a new tab or window,
+		// copied or dragged, so the pages of the other sections are kept
+		$(document).on('mousedown auxclick contextmenu dragstart', pageLinks, function() {
+			var param = $(this).closest('.rtng-section').attr('data-rtng-param');
+
+			if (param) {
+				this.href = pageUrl(param, linkStart(this));
+			}
+		});
+
+		$(document).on('click', pageLinks, function(e) {
 			var $section = $(this).closest('.rtng-section');
 			var param = $section.attr('data-rtng-param');
 
-			if (e.ctrlKey || e.metaKey || e.shiftKey || e.which === 2 || !param) {
+			if (!param) {
+				return;
+			}
+
+			if (e.ctrlKey || e.metaKey || e.shiftKey || e.which === 2) {
+				this.href = pageUrl(param, linkStart(this));
 				return;
 			}
 
 			e.preventDefault();
-
-			// Take only the start value of this section from the link, the
-			// start values of all other sections remain as they are.
-			var linkUrl = new URL(this.href, window.location.href);
-			changePage($section, parseInt(linkUrl.searchParams.get(param), 10) || 0);
+			changePage($section, linkStart(this));
 		});
 
 		// Page jump box of client side paginated sections. Runs in the capture
@@ -281,13 +310,14 @@ jQuery(
 		var clientPageJump = function(e, input) {
 			var $section = $(input).closest('.rtng-section');
 			var perPage = parseInt($section.attr('data-rtng-per-page'), 10) || 1;
+			var totalPages = parseInt($section.attr('data-rtng-total-pages'), 10) || 1;
 			var page = parseInt(input.value, 10);
 
 			e.preventDefault();
 			e.stopPropagation();
 
 			if (page > 0) {
-				changePage($section, (page - 1) * perPage);
+				changePage($section, (Math.min(page, totalPages) - 1) * perPage);
 			}
 
 			// Close the dropdown
@@ -309,6 +339,12 @@ jQuery(
 				clientPageJump(e, input);
 			}
 		}, true);
+
+		// Hide the topic type boxes without topics on the current page
+		$('.rtng-section[data-rtng-client="1"]').each(function() {
+			var $section = $(this);
+			showClientPage($section, parseInt($section.attr('data-rtng-current-page'), 10) || 1);
+		});
 
 		// Back and forward buttons, show the pages of the current URL
 		$(window).on('popstate', function() {
