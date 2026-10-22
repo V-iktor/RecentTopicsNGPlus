@@ -10,8 +10,8 @@ Based on NV Recent Topics for phpBB 3.0, by Joas Schilling ([nickvergessen](http
 [![Tests](https://github.com/IMC-GER/RecentTopicsNG/actions/workflows/tests.yml/badge.svg)](https://github.com/IMC-GER/RecentTopicsNG/actions/workflows/tests.yml)
 
 ### Version
-* v1.2.0
-* 01/05/2026
+* v1.3.0
+* 22/10/2026
 
 ### Requirements
 * phpBB 3.3.5 - 3.3.x
@@ -42,13 +42,15 @@ The extension folder in this repository is `imcger/recenttopicsng`. On the serve
 
 #### Fresh install (Recent Topics NG not installed yet)
 1. If one of the older extensions "Recent Topics", "Recent Topics (fork by IMC & LukeWCS)" or "Recent Topics NG" v2.2.15-pl18 is installed, go to "ACP" > "Customise" > "Manage extensions", then disable it, delete its data and remove its files. They all have the clean name `paybas/recenttopics` and cannot be used together with this extension.
-2. Download this repository (on GitHub: "Code" > "Download ZIP") and unpack it.
-3. Upload the `imcger` folder to the `ext` folder of your board, so you get `ext/imcger/recenttopicsng/`.
+2. Download this repository (on GitHub: "Code" > "Download ZIP") and unpack it. The ZIP contains a wrapper folder (e.g. `RecentTopicsNGPlus-master/`); the `imcger` folder is inside it. Do not upload the wrapper folder itself.
+3. Upload the extension so you get `ext/imcger/recenttopicsng/` on the server:
+   * If there is no `ext/imcger/` folder yet, upload the `imcger` folder into the `ext` folder of your board.
+   * If `ext/imcger/` already exists (other extensions by IMC-GER are installed), upload only the `recenttopicsng` folder into `ext/imcger/`. Some FTP programs replace a whole folder when you upload one with the same name, which would delete the other extensions.
 4. Go to "ACP" > "Customise" > "Manage extensions" and enable "Recent Topics NG".
 5. Go to "ACP" > "Extensions" > "Recent Topics" > "Configuration" to set up the sections and other options (see [Setting up sections](#setting-up-sections)).
 6. Check the "Recent Topics NG" user permissions under "ACP" > "Permissions", which control what users may change in their UCP.
 
-#### Update from Recent Topics NG without sections (e.g. v1.2.x)
+#### Update from v1.2.x (without sections) to v1.3.0
 The extension keeps its name (`imcger/recenttopicsng`), so this is a normal extension update. Your settings and user preferences are kept.
 
 1. Go to "ACP" > "Customise" > "Manage extensions" and **disable** "Recent Topics NG".

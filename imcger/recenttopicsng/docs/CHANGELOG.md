@@ -1,7 +1,7 @@
-## Changelog Recent Topics NG V1.2.1
+## Changelog Recent Topics NG V1.3.0
 This is a non-exhaustive (but still near complete) changelog for Recent Topics NG 1.x including release candidate versions.
 
-#### Changes since V1.2.1
+#### Changes since V1.2.1 (06/09/2026)
   - [Feature] Recent topics can be split into several sections. Each section has its own title and shows the topics of the selected forums or categories (including subforums). Sections are managed in the ACP.
   - [Feature] Each section is paginated independently with its own URL parameter `rtng_s{id}_start`. Links with the old parameter `rtng_topics_start` open the matching page of the first section. Ids of deleted sections are not reused.
   - [Feature] Pagination of a section is done client side without reloading the whole page. The URL is updated, so the browser back button and shared links work.
