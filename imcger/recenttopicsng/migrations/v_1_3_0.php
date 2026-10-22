@@ -25,6 +25,7 @@ class v_1_3_0 extends \phpbb\db\migration\migration
 		return [
 			// One section without title and forum filter equals the previous behaviour
 			['config_text.add', ['rtng_sections', json_encode([['id' => 1, 'title' => '', 'forums' => []]])]],
+			['config.add', ['rtng_section_next_id', 2]],
 		];
 	}
 

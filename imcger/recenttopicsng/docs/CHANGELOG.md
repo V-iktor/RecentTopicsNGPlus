@@ -3,7 +3,7 @@ This is a non-exhaustive (but still near complete) changelog for Recent Topics N
 
 #### Changes since V1.2.1
   - [Feature] Recent topics can be split into several sections. Each section has its own title and shows the topics of the selected forums or categories (including subforums). Sections are managed in the ACP.
-  - [Feature] Each section is paginated independently with its own URL parameter `rtng_s{id}_start`.
+  - [Feature] Each section is paginated independently with its own URL parameter `rtng_s{id}_start`. Links with the old parameter `rtng_topics_start` open the matching page of the first section. Ids of deleted sections are not reused.
   - [Feature] Pagination of a section is done client side without reloading the whole page. The URL is updated, so the browser back button and shared links work.
   - [Change] Template loop `rtng_topics` replaced by `rtng_sections` with the nested loops `rtng_sections.topics`, `rtng_sections.pagination` and `rtng_sections.cc`.
   - [Change] Template vars `RTNG_TOPICS_COUNT` and `S_RTNG_TOPIC_ICONS` moved into the section loop as `TOPICS_COUNT` and `S_TOPIC_ICONS`.

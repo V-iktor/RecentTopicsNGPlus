@@ -122,31 +122,8 @@ class admin_controller
 		}
 
 		$forum_list = make_forum_select(false, false, true, false, false, false, true);
-		$sections	= $this->ctrl_common->get_sections();
-		$next_id	= 1;
+		$next_id	= (int) $this->config['rtng_section_next_id'];
 
-		foreach ($sections as $section)
-		{
-			$next_id = max($next_id, $section['id'] + 1);
-
-			$this->template->assign_block_vars('rtng_sections', [
-				'ID'	=> $section['id'],
-				'TITLE'	=> $section['title'],
-			]);
-
-			foreach ($forum_list as $forum_id => $forum)
-			{
-				$this->template->assign_block_vars('rtng_sections.forums', [
-					'FORUM_ID'		=> $forum_id,
-					'FORUM_NAME'	=> $forum['forum_name'],
-					'PADDING'		=> $forum['padding'],
-					'S_IS_CAT'		=> $forum['forum_type'] == FORUM_CAT,
-					'S_SELECTED'	=> in_array($forum_id, $section['forums']),
-				]);
-			}
-		}
-
-		// Forum options for new sections
 		foreach ($forum_list as $forum_id => $forum)
 		{
 			$this->template->assign_block_vars('rtng_forum_options', [
@@ -154,7 +131,17 @@ class admin_controller
 				'FORUM_NAME'	=> $forum['forum_name'],
 				'PADDING'		=> $forum['padding'],
 				'S_IS_CAT'		=> $forum['forum_type'] == FORUM_CAT,
-				'S_SELECTED'	=> false,
+			]);
+		}
+
+		foreach ($this->ctrl_common->get_sections() as $section)
+		{
+			$next_id = max($next_id, $section['id'] + 1);
+
+			$this->template->assign_block_vars('rtng_sections', [
+				'ID'		=> $section['id'],
+				'TITLE'		=> $section['title'],
+				'FORUM_IDS'	=> $section['forums'],
 			]);
 		}
 
@@ -215,10 +202,16 @@ class admin_controller
 		// At least one section is required
 		if (!count($sections))
 		{
-			$sections[] = ['id' => 1, 'title' => '', 'forums' => []];
+			$sections[] = ['id' => (int) $this->config['rtng_section_next_id'], 'title' => '', 'forums' => []];
 		}
 
 		$this->ctrl_common->set_sections($sections);
+
+		// Ids of deleted sections are never used again, so links and collapsed states stay unique
+		$next_id = max(array_merge([(int) $this->config['rtng_section_next_id']], array_map(function ($section) {
+			return $section['id'] + 1;
+		}, $sections)));
+		$this->config->set('rtng_section_next_id', $next_id);
 	}
 
 	/**
