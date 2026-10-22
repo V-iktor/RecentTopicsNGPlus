@@ -127,10 +127,142 @@ jQuery(
 				});
 		};
 
+		/**
+		 * Client side pagination. Sections with data-rtng-client="1" contain the
+		 * topics of all their pages, a page change only shows other rows.
+		 */
+		var isClientSection = function($section) {
+			return $section.attr('data-rtng-client') === '1';
+		};
+
+		// URL of the current page with a new start value for one section
+		var pageUrl = function(param, start) {
+			var url = new URL(window.location.href);
+
+			if (start > 0) {
+				url.searchParams.set(param, start);
+			} else {
+				url.searchParams.delete(param);
+			}
+			url.hash = '';
+
+			return url.toString();
+		};
+
+		// Same list of page links as phpbb\pagination::generate_template_pagination()
+		var buildPageLinks = function($pagination, param, perPage, totalPages, onPage) {
+			var startPage = (totalPages > 5) ? Math.min(Math.max(1, onPage - 2), totalPages - 4) : 1;
+			var endPage = (totalPages > 5) ? Math.max(Math.min(totalPages, onPage + 2), 5) : totalPages;
+			var items = [];
+
+			var link = function(page) {
+				return $('<a class="button" role="button"></a>').attr('href', pageUrl(param, (page - 1) * perPage));
+			};
+
+			var arrow = function(page, type) {
+				var flow = $pagination.attr(type === 'prev' ? 'data-flow-begin' : 'data-flow-end');
+				var label = $pagination.attr(type === 'prev' ? 'data-lang-previous' : 'data-lang-next');
+
+				return $('<li class="arrow"></li>').addClass(type === 'prev' ? 'previous' : 'next').append(
+					link(page).addClass('button-icon-only').attr('rel', type).append(
+						$('<i class="icon fa-fw" aria-hidden="true"></i>').addClass('fa-chevron-' + flow),
+						$('<span class="sr-only"></span>').text(label)
+					)
+				);
+			};
+
+			if (onPage !== 1) {
+				items.push(arrow(onPage - 1, 'prev'));
+			}
+
+			var atPage = 1;
+			do {
+				if ((atPage === 2 && startPage > 2) || (atPage === totalPages - 1 && endPage < totalPages - 1)) {
+					items.push($('<li class="ellipsis" role="separator"></li>').append($('<span></span>').text($pagination.attr('data-lang-ellipsis'))));
+				} else if (atPage === onPage) {
+					items.push($('<li class="active"></li>').append($('<span></span>').text(atPage)));
+				} else {
+					items.push($('<li></li>').append(link(atPage).text(atPage)));
+				}
+
+				if (atPage === 2 && atPage < startPage - 1) {
+					atPage = startPage;
+				} else if (atPage === endPage && endPage < totalPages - 1) {
+					atPage = totalPages - 1;
+				} else {
+					atPage++;
+				}
+			} while (atPage <= totalPages);
+
+			if (onPage !== totalPages) {
+				items.push(arrow(onPage + 1, 'next'));
+			}
+
+			return items;
+		};
+
+		// Show one page of a client side paginated section
+		var showClientPage = function($section, page) {
+			var param = $section.attr('data-rtng-param');
+			var perPage = parseInt($section.attr('data-rtng-per-page'), 10) || 1;
+			var totalPages = parseInt($section.attr('data-rtng-total-pages'), 10) || 1;
+
+			page = Math.min(Math.max(1, page), totalPages);
+
+			$section.find('li.row[data-rtng-page]').each(function() {
+				this.hidden = parseInt(this.getAttribute('data-rtng-page'), 10) !== page;
+			});
+
+			// Hide boxes (topic type groups) without a topic on this page
+			$section.find('.rtng-box').each(function() {
+				var $rows = $(this).find('li.row[data-rtng-page]');
+
+				if ($rows.length) {
+					this.hidden = !$rows.filter(function() {
+						return !this.hidden;
+					}).length;
+				}
+			});
+
+			$section.find('.rtng-pagination').each(function() {
+				var $pagination = $(this);
+				var $list = $pagination.children('ul');
+
+				$list.children('li:not(.page-jump)').remove();
+				$list.append(buildPageLinks($pagination, param, perPage, totalPages, page));
+			});
+
+			return page;
+		};
+
+		// Change the page of a section, client side or by loading the section
+		var changePage = function($section, start) {
+			var param = $section.attr('data-rtng-param');
+			var sectionId = $section.attr('data-rtng-section');
+			var url = pageUrl(param, start);
+
+			window.history.pushState({rtng: true}, '', url);
+			currentSearch = window.location.search;
+
+			var scrollToSection = function() {
+				var $current = $('#rtng-section-' + sectionId);
+
+				if ($current.length && $current.offset().top < $(window).scrollTop()) {
+					$('html, body').scrollTop($current.offset().top);
+				}
+			};
+
+			if (isClientSection($section)) {
+				showClientPage($section, Math.floor(start / (parseInt($section.attr('data-rtng-per-page'), 10) || 1)) + 1);
+				scrollToSection();
+			} else {
+				loadSections(url, [sectionId]).then(scrollToSection);
+			}
+		};
+
 		$(document).on('click', '.rtng-section .rtng-pagination > ul > li:not(.page-jump) > a[href]', function(e) {
 			var $section = $(this).closest('.rtng-section');
 			var param = $section.attr('data-rtng-param');
-			var sectionId = $section.attr('data-rtng-section');
 
 			if (e.ctrlKey || e.metaKey || e.shiftKey || e.which === 2 || !param) {
 				return;
@@ -141,29 +273,44 @@ jQuery(
 			// Take only the start value of this section from the link, the
 			// start values of all other sections remain as they are.
 			var linkUrl = new URL(this.href, window.location.href);
-			var pageUrl = new URL(window.location.href);
-			var start = parseInt(linkUrl.searchParams.get(param), 10) || 0;
-
-			if (start > 0) {
-				pageUrl.searchParams.set(param, start);
-			} else {
-				pageUrl.searchParams.delete(param);
-			}
-			pageUrl.hash = '';
-
-			window.history.pushState({rtng: true}, '', pageUrl.toString());
-			currentSearch = window.location.search;
-
-			loadSections(pageUrl.toString(), [sectionId]).then(function() {
-				var $newSection = $('#rtng-section-' + sectionId);
-
-				if ($newSection.length && $newSection.offset().top < $(window).scrollTop()) {
-					$('html, body').scrollTop($newSection.offset().top);
-				}
-			});
+			changePage($section, parseInt(linkUrl.searchParams.get(param), 10) || 0);
 		});
 
-		// Back and forward buttons, reload all sections for the current URL
+		// Page jump box of client side paginated sections. Runs in the capture
+		// phase, so the page load of phpBB's own page jump handler is skipped.
+		var clientPageJump = function(e, input) {
+			var $section = $(input).closest('.rtng-section');
+			var perPage = parseInt($section.attr('data-rtng-per-page'), 10) || 1;
+			var page = parseInt(input.value, 10);
+
+			e.preventDefault();
+			e.stopPropagation();
+
+			if (page > 0) {
+				changePage($section, (page - 1) * perPage);
+			}
+
+			// Close the dropdown
+			$('body').trigger('click');
+		};
+
+		document.addEventListener('click', function(e) {
+			var button = e.target.closest && e.target.closest('.rtng-section[data-rtng-client="1"] .page-jump-form input[type="button"]');
+
+			if (button) {
+				clientPageJump(e, $(button).siblings('input.inputbox').get(0));
+			}
+		}, true);
+
+		document.addEventListener('keypress', function(e) {
+			var input = e.target.closest && e.target.closest('.rtng-section[data-rtng-client="1"] .page-jump-form input.inputbox');
+
+			if (input && (e.which === 13 || e.keyCode === 13)) {
+				clientPageJump(e, input);
+			}
+		}, true);
+
+		// Back and forward buttons, show the pages of the current URL
 		$(window).on('popstate', function() {
 			// Ignore changes of the hash only
 			if (window.location.search === currentSearch) {
@@ -171,9 +318,20 @@ jQuery(
 			}
 			currentSearch = window.location.search;
 
-			var sectionIds = $('.rtng-section').map(function() {
-				return $(this).attr('data-rtng-section');
-			}).get();
+			var params = new URL(window.location.href).searchParams;
+			var sectionIds = [];
+
+			$('.rtng-section').each(function() {
+				var $section = $(this);
+
+				if (isClientSection($section)) {
+					var perPage = parseInt($section.attr('data-rtng-per-page'), 10) || 1;
+					var start = parseInt(params.get($section.attr('data-rtng-param')), 10) || 0;
+					showClientPage($section, Math.floor(start / perPage) + 1);
+				} else {
+					sectionIds.push($section.attr('data-rtng-section'));
+				}
+			});
 
 			if (sectionIds.length) {
 				loadSections(window.location.href, sectionIds);

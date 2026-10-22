@@ -15,6 +15,12 @@ namespace imcger\recenttopicsng\core;
 
 class rtng_functions
 {
+	/**
+	 * Sections with up to this number of topics load all their topics at once
+	 * and are paginated in the browser without further requests
+	 */
+	const CLIENT_PAGINATION_MAX_TOPICS = 100;
+
 	private array $user_setting;
 	private int $topics_start;
 	private int $topics_per_page;
@@ -205,7 +211,8 @@ class rtng_functions
 			return;
 		}
 
-		$topics_count = $this->gettopiclist($obtain_icons, $forums, $rtng_start, $total_topics_limit, $excluded_topics, $forum_id_list, $topic_list);
+		$client_side  = $total_topics_limit <= self::CLIENT_PAGINATION_MAX_TOPICS;
+		$topics_count = $this->gettopiclist($obtain_icons, $forums, $rtng_start, $total_topics_limit, $excluded_topics, $forum_id_list, $topic_list, $client_side);
 
 		// Return if there are no topics available to display.
 		if (count($topic_list) == 0)
@@ -235,10 +242,11 @@ class rtng_functions
 		}
 
 		$this->template->alter_block_array($tpl_loopname, [
-			'TOPICS_COUNT' => $this->language->lang('RTNG_TOPICS_COUNT', (int) $topics_count),
+			'TOPICS_COUNT'			=> $this->language->lang('RTNG_TOPICS_COUNT', (int) $topics_count),
+			'S_CLIENT_PAGINATION'	=> $client_side,
 		], true, 'change');
 
-		$this->fill_template($icons, $tpl_loopname, $start_param, $topic_tracking_info, $topics_count, $topic_list);
+		$this->fill_template($icons, $tpl_loopname, $start_param, $topic_tracking_info, $topics_count, $topic_list, $client_side);
 	}
 
 	/**
@@ -313,7 +321,7 @@ class rtng_functions
 	/**
 	 * Get the topic list
 	 */
-	private function gettopiclist(bool &$obtain_icons, array &$forums, int $rtng_start, int $total_topics_limit, array $excluded_topics, array $forum_id_list, array &$topic_list): int
+	private function gettopiclist(bool &$obtain_icons, array &$forums, int $rtng_start, int $total_topics_limit, array $excluded_topics, array $forum_id_list, array &$topic_list, bool $client_side = false): int
 	{
 		$topics_count	 = 0;
 		$min_topic_level = $this->config['rtng_min_topic_level'];
@@ -330,7 +338,8 @@ class rtng_functions
 			$total_topics_limit = min($total_topics_limit, count($unread_topics));
 			$rtng_start = $this->validate_start($rtng_start, $this->topics_per_page, $total_topics_limit);
 
-			$topic_list = array_slice(array_keys($unread_topics), $rtng_start, $this->topics_per_page);
+			// For client side pagination the topics of all pages are loaded
+			$topic_list = $client_side ? array_slice(array_keys($unread_topics), 0, $total_topics_limit) : array_slice(array_keys($unread_topics), $rtng_start, $this->topics_per_page);
 		}
 		else
 		{
@@ -360,7 +369,8 @@ class rtng_functions
 
 			$total_topics_limit = min($total_topics_limit, $topics_count);
 			$rtng_start			= $this->validate_start($rtng_start, $this->topics_per_page, $total_topics_limit);
-			$result = $this->db->sql_query_limit($sql, $this->topics_per_page, $rtng_start);
+			// For client side pagination the topics of all pages are loaded
+			$result = $client_side ? $this->db->sql_query_limit($sql, $total_topics_limit, 0) : $this->db->sql_query_limit($sql, $this->topics_per_page, $rtng_start);
 
 			// Return 0 topics to display
 			if ($result == false)
@@ -517,7 +527,7 @@ class rtng_functions
 	/**
 	 * Set template vars
 	 */
-	private function fill_template(array $icons, string $section_loopname, string $start_param, array $topic_tracking_info, int $topics_count, array $topic_list): void
+	private function fill_template(array $icons, string $section_loopname, string $start_param, array $topic_tracking_info, int $topics_count, array $topic_list, bool $client_side = false): void
 	{
 		$tpl_loopname = $section_loopname . '.topics';
 
@@ -547,8 +557,13 @@ class rtng_functions
 			}
 
 			$s_type_switch = false;
+			$row_index	   = 0;
+			$current_page  = intdiv($this->topics_start, $this->topics_per_page) + 1;
 			foreach ($rowset as $row)
 			{
+				// Page of the topic in the list, for client side pagination
+				$list_page = $client_side ? intdiv($row_index++, $this->topics_per_page) + 1 : $current_page;
+
 				$topic_id		= $row['topic_id'];
 				$forum_id		= $row['forum_id'];
 				$unread_topic	= false;
@@ -626,6 +641,8 @@ class rtng_functions
 				$this->language->add_lang('rtng_common', 'imcger/recenttopicsng');
 				$tpl_ary = [
 					'parent_forums'						=> $parent_forums,
+					'LIST_PAGE'							=> $list_page,
+					'S_LIST_HIDDEN'						=> $list_page != $current_page,
 					'FORUM_ID'							=> $forum_id,
 					'TOPIC_ID'							=> $topic_id,
 					'TOPIC_AUTHOR'						=> $topic_author,

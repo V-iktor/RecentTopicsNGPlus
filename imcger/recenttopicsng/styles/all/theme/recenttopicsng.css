@@ -129,3 +129,9 @@
 	pointer-events: none;
 	transition: opacity 0.15s ease-in-out;
 }
+
+/* Rows and boxes of other pages in client side paginated sections */
+.rtng-section li.row[hidden],
+.rtng-section .rtng-box[hidden] {
+	display: none;
+}

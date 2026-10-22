@@ -12,7 +12,7 @@
 
 {% if S_RTNG_LOCATION_BOTTOM || S_RTNG_LOCATION_TOP -%}
 	{% for section in rtng_sections %}
-	<div class="rtng-section" id="rtng-section-{{ section.ID }}" data-rtng-section="{{ section.ID }}" data-rtng-param="{{ section.START_PARAM }}">
+	<div class="rtng-section" id="rtng-section-{{ section.ID }}" data-rtng-section="{{ section.ID }}" data-rtng-param="{{ section.START_PARAM }}"{% if section.S_CLIENT_PAGINATION %} data-rtng-client="1" data-rtng-per-page="{{ section.PER_PAGE }}" data-rtng-total-pages="{{ section.TOTAL_PAGES }}"{% endif %}>
 		{% if section.pagination is defined && S_RTNG_LOCATION_TOP %}
 			<div class="action-bar bar-top">
 				{% include '@imcger_recenttopicsng/rtng_pagination.html' %}
@@ -58,7 +58,7 @@
 				rtng.S_POST_ANNOUNCE  ? ' announce',
 				rtng.S_POST_STICKY    ? ' sticky',
 				rtng.S_TOPIC_REPORTED ? ' reported',
-			]|join }}">
+			]|join }}" data-rtng-page="{{ rtng.LIST_PAGE }}"{{ rtng.S_LIST_HIDDEN ? ' hidden' }}>
 				{% EVENT viewforum_body_topic_row_prepend %}
 				<dl class="row-item {{ rtng.TOPIC_IMG_STYLE }}">
 					<dt {% if rtng.TOPIC_ICON_IMG && section.S_TOPIC_ICONS %} style="background-image: url({{ T_ICONS_PATH }}{{ rtng.TOPIC_ICON_IMG }}); background-repeat: no-repeat;"{% endif %} title="{{ rtng.TOPIC_FOLDER_IMG_ALT }}">
