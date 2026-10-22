@@ -11,7 +11,7 @@
  #}
 
 {# Pagination of a single section, requires the loop var "section" #}
-<div class="pagination rtng-pagination">
+<div class="pagination rtng-pagination" data-lang-previous="{{ lang('PREVIOUS')|e('html_attr') }}" data-lang-next="{{ lang('NEXT')|e('html_attr') }}" data-lang-ellipsis="{{ lang('ELLIPSIS')|e('html_attr') }}" data-flow-begin="{{ S_CONTENT_FLOW_BEGIN }}" data-flow-end="{{ S_CONTENT_FLOW_END }}">
 	{{ section.TOPICS_COUNT }}
 	<ul>
 	{% if section.BASE_URL && section.TOTAL_PAGES > 6 %}
@@ -33,7 +33,7 @@
 		{% if pagination.S_IS_PREV %}
 			<li class="arrow previous"><a class="button button-icon-only" href="{{ pagination.PAGE_URL }}" rel="prev" role="button"><i class="icon fa-chevron-{{ S_CONTENT_FLOW_BEGIN }} fa-fw" aria-hidden="true"></i><span class="sr-only">{{ lang('PREVIOUS') }}</span></a></li>
 		{% elseif pagination.S_IS_CURRENT %}
-			<li class="active"><span>{{ pagination.PAGE_NUMBER }}</span></li>
+			<li class="active"><span tabindex="-1" aria-current="page">{{ pagination.PAGE_NUMBER }}</span></li>
 		{% elseif pagination.S_IS_ELLIPSIS %}
 			<li class="ellipsis" role="separator"><span>{{ lang('ELLIPSIS') }}</span></li>
 		{% elseif pagination.S_IS_NEXT %}

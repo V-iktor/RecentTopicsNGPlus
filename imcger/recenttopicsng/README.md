@@ -3,7 +3,7 @@
 ### Description
 Extension for phpBB - Adds a list with a number of recent topics to the board index. They can be displayed at the top, bottom or side of the page. You can also display the recent topics on a separate page. The first, last or last unread posts can be displayed in the topic list. The settings in the UCP and the user administration are displayed depending on the user permission.
 
-The list can be split into several **sections**. Each section has its own title, shows the topics of selected forums or categories, and has its own page links. Changing the page of one section only reloads that section, without reloading the whole page.
+The list can be split into several **sections**. Each section has its own title, shows the topics of selected forums or categories, and has its own page links. The topics of all pages of a section are loaded with the page, so changing the page of a section is instant and needs no request to the server. Only sections with more than 50 topics (e.g. with “Show all recent topic pages” enabled) load the other pages from the server, again without reloading the whole page.
 
 Based on NV Recent Topics for phpBB 3.0, by Joas Schilling ([nickvergessen](https://github.com/nickvergessen))
 
@@ -79,4 +79,4 @@ Under "ACP" > "Extensions" > "Recent Topics" > "Configuration", in the "Sections
 
 Forums for which "Display on Recent Topics NG" is switched off in the forum settings are never shown, in any section. The number of topics per page, the number of pages and the other display options apply to every section.
 
-Each section has its own page parameter in the URL (`rtng_s1_start`, `rtng_s2_start`, ...), so links to a specific page of a section can be bookmarked and shared.
+Each section has its own page parameter in the URL (`rtng_s1_start`, `rtng_s2_start`, ...), so links to a specific page of a section can be bookmarked and shared. The browser's back and forward buttons switch between the pages too.
