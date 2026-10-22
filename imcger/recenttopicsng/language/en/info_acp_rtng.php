@@ -77,6 +77,18 @@ $lang = array_merge($lang, [
 	'RTNG_SIMPLE_PAGE_QTY'			=> 'Number of pages in the simplified display',
 	'RTNG_SIMPLE_PAGE_QTY_EXP'		=> 'This allows you to specify the maximum number of list pages to be displayed for the simplified display.',
 
+
+	// Sections
+	'RTNG_SECTIONS'					=> 'Sections',
+	'RTNG_SECTIONS_EXP'				=> 'Recent topics can be split into several sections. Each section has its own title, shows the topics of the selected forums and is paginated independently. The sections are displayed in the order shown here.',
+	'RTNG_SECTION_TITLE'			=> 'Section title',
+	'RTNG_SECTION_TITLE_EXP'		=> 'Leave empty to use the default title.',
+	'RTNG_SECTION_FORUMS'			=> 'Forums',
+	'RTNG_SECTION_FORUMS_EXP'		=> 'Select the forums or categories whose topics are displayed in this section. Subforums of a selected forum or category are included. Select nothing to display all forums.<br>Forums for which “Display on Recent Topics NG” is disabled are never displayed.',
+	'RTNG_SECTION_ADD'				=> 'Add section',
+	'RTNG_SECTION_UP'				=> 'Move up',
+	'RTNG_SECTION_DOWN'				=> 'Move down',
+	'RTNG_SECTION_DELETE'			=> 'Delete section',
 	// User Overridable settings. these apply for anon users and can be overridden by UCP
 	'RTNG_OVERRIDABLE'				=> 'UCP overridable Settings',
 	'RTNG_OVERRIDABLE_EXPLAIN'		=> 'In order for the user to be able to change these settings in the user control center, the corresponding user permission must be assigned to them in the permission management. If they do not have this permission, these default settings will be applied for them. These values are also set for new users and guests.<br><br>In order for the title, author, and date of the first unread post to be selected for display in the topic title, this option must be enabled in the <u><a href="%s">server load</a></u> settings.',

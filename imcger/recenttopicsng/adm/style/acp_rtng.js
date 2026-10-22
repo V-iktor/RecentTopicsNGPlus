@@ -75,10 +75,61 @@ class LukeWCSphpBBConfirmBox {
 	}
 }
 
+class RecentTopicsNGSections {
+/*
+* Add, remove and sort the recent topics sections
+*/
+	constructor(listSelector, templateSelector, addSelector) {
+		this.$list		= $(listSelector);
+		this.$template	= $(templateSelector);
+		this.$add		= $(addSelector);
+		this.nextId		= parseInt(this.$add.attr('data-next-id'), 10) || 1;
+
+		this.$add	.on('click', this.#Add);
+		this.$list	.on('click', 'input[data-rtng-action]', this.#Action);
+		this.#UpdateButtons();
+	}
+
+	#Add = () => {
+		this.$list.append(this.$template.html().replace(/__ID__/g, this.nextId++));
+		this.#UpdateButtons();
+	}
+
+	#Action = (e) => {
+		const $row = $(e.target).closest('.rtng-section-row');
+
+		switch ($(e.target).attr('data-rtng-action')) {
+			case 'up':
+				$row.prev('.rtng-section-row').before($row);
+			break;
+
+			case 'down':
+				$row.next('.rtng-section-row').after($row);
+			break;
+
+			case 'delete':
+				$row.remove();
+			break;
+		}
+		this.#UpdateButtons();
+	}
+
+	#UpdateButtons = () => {
+		const $rows = this.$list.children('.rtng-section-row');
+
+		$rows.find('input[data-rtng-action="delete"]')	.prop('disabled', $rows.length < 2);
+		$rows.find('input[data-rtng-action="up"]')		.prop('disabled', false);
+		$rows.find('input[data-rtng-action="down"]')	.prop('disabled', false);
+		$rows.first().find('input[data-rtng-action="up"]')	.prop('disabled', true);
+		$rows.last().find('input[data-rtng-action="down"]')	.prop('disabled', true);
+	}
+}
+
 // Register events
 
 $(window).ready(function() {
 	RecentTopicsNG.ConfirmBox = new LukeWCSphpBBConfirmBox('input[name="submit"]', 300);
+	RecentTopicsNG.Sections	  = new RecentTopicsNGSections('#rtng_section_list', '#rtng_section_template', '#rtng_section_add');
 });
 
 })(jQuery);	// IIFE end

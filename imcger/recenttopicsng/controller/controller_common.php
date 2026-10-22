@@ -24,6 +24,7 @@ class controller_common
 		protected \phpbb\db\driver\driver_interface $db,
 		protected \phpbb\config\config $config,
 		protected \phpbb\extension\manager $ext_manager,
+		protected \phpbb\config\db_text $config_text,
 	)
 	{
 		$this->set_rtng_user_data($user->data);
@@ -240,6 +241,36 @@ class controller_common
 		unset($user_auth);
 
 		return $default_data;
+	}
+
+	/**
+	 * Returns the configured recent topics sections.
+	 * Each section is an array with the keys id, title and forums.
+	 */
+	public function get_sections(): array
+	{
+		$sections = json_decode((string) $this->config_text->get('rtng_sections'), true);
+
+		if (!is_array($sections) || !count($sections))
+		{
+			return [['id' => 1, 'title' => '', 'forums' => []]];
+		}
+
+		return array_map(function ($section) {
+			return [
+				'id'	 => (int) ($section['id'] ?? 0),
+				'title'	 => (string) ($section['title'] ?? ''),
+				'forums' => array_map('intval', (array) ($section['forums'] ?? [])),
+			];
+		}, $sections);
+	}
+
+	/**
+	 * Store the recent topics sections.
+	 */
+	public function set_sections(array $sections): void
+	{
+		$this->config_text->set('rtng_sections', json_encode(array_values($sections)));
 	}
 
 	/**

@@ -19,6 +19,7 @@ class rtng_functions
 	private int $topics_start;
 	private int $topics_per_page;
 	private int $topics_page_number;
+	private ?object $collapsible_categories = null;
 
 	public function __construct
 	(
@@ -72,9 +73,17 @@ class rtng_functions
 	}
 
 	/**
+	 * Enable support for the phpBB collapsible categories extension
+	 */
+	public function set_collapsible_categories(object $collapsible_categories): void
+	{
+		$this->collapsible_categories = $collapsible_categories;
+	}
+
+	/**
 	 * Display recent topics
 	 */
-	public function display_recent_topics(string $tpl_loopname = 'rtng_topics'): void
+	public function display_recent_topics(string $tpl_loopname = 'rtng_sections'): void
 	{
 		$this->user_setting = $this->ctrl_common->get_user_setting();
 
@@ -89,28 +98,21 @@ class rtng_functions
 			include($this->root_path . 'includes/functions_display.' . $this->phpEx);
 		}
 
-		$rtng_start = $this->request->variable($tpl_loopname . '_start', 0);
-
 		$excluded_topics = explode(',', $this->config['rtng_anti_topics']);
 
-		$min_topic_level = $this->config['rtng_min_topic_level'];
+		$min_topic_level = (int) $this->config['rtng_min_topic_level'];
 
 		$this->language->add_lang('rtng_common', 'imcger/recenttopicsng');
 		$this->template->assign_vars([
 				'S_RTNG_LOCATION_TOP'	 => $this->user_setting['user_rtng_location'] == 'RTNG_TOP',
 				'S_RTNG_LOCATION_BOTTOM' => $this->user_setting['user_rtng_location'] == 'RTNG_BOTTOM',
 				'S_RTNG_LOCATION_SIDE'	 => $this->user_setting['user_rtng_location'] == 'RTNG_SIDE',
-				strtoupper($tpl_loopname) . '_DISPLAY' => true,
+				'RTNG_TOPICS_DISPLAY'	 => true,
+				'RTNG_SORT_START_TIME'	 => $this->user_setting['user_rtng_sort_start_time'],
 			]
 		);
 
 		$forum_id_list = $this->getforumlist();
-
-		// No forums to display
-		if (count($forum_id_list) == 0)
-		{
-			return;
-		}
 
 		// When not 0, they set by page controller
 		if (!$this->topics_per_page)
@@ -123,6 +125,50 @@ class rtng_functions
 		{
 			$this->topics_page_number = $this->user_setting['user_rtng_index_page_qty'];
 		}
+
+		foreach ($this->ctrl_common->get_sections() as $section)
+		{
+			$this->display_section($section, $tpl_loopname, $forum_id_list, $excluded_topics, $min_topic_level);
+		}
+	}
+
+	/**
+	 * Display one section of recent topics, each section is paginated independently
+	 */
+	private function display_section(array $section, string $tpl_loopname, array $forum_id_list, array $excluded_topics, int $min_topic_level): void
+	{
+		$start_param = 'rtng_s' . $section['id'] . '_start';
+		$title		 = $section['title'] !== '' ? $section['title'] : $this->language->lang('RTNG' . ($this->user_setting['user_rtng_unread_only'] ? '_UNREAD' : '') . '_TITLE');
+
+		$this->template->assign_block_vars($tpl_loopname, [
+			'ID'			=> $section['id'],
+			'TITLE'			=> $title,
+			'START_PARAM'	=> $start_param,
+		]);
+
+		if (isset($this->collapsible_categories))
+		{
+			// Keep the id of the first section for compatibility with previous versions
+			$fid = $section['id'] == 1 ? 'fid_rtng' : 'fid_rtng_' . $section['id'];
+			$this->template->assign_block_vars($tpl_loopname . '.cc', [
+				'S_FORUM_HIDDEN' => $this->collapsible_categories->is_collapsed($fid),
+				'U_COLLAPSE_URL' => $this->collapsible_categories->get_collapsible_link($fid),
+			]);
+		}
+
+		// Restrict to the forums (and their subforums) selected for this section
+		if (count($section['forums']))
+		{
+			$forum_id_list = array_values(array_intersect($forum_id_list, $this->get_section_forum_ids($section['forums'])));
+		}
+
+		// No forums to display
+		if (count($forum_id_list) == 0)
+		{
+			return;
+		}
+
+		$rtng_start = $this->request->variable($start_param, 0);
 
 		// limit number of pages to be shown
 		// compute as product of topics per page and max number of pages.
@@ -184,13 +230,36 @@ class rtng_functions
 			}
 		}
 
-		$this->template->assign_vars([
-				'RTNG_TOPICS_COUNT'		 => $this->language->lang('RTNG_TOPICS_COUNT', (int) $topics_count),
-				'RTNG_SORT_START_TIME'	 => $this->user_setting['user_rtng_sort_start_time'],
-			]
-		);
+		$this->template->alter_block_array($tpl_loopname, [
+			'TOPICS_COUNT' => $this->language->lang('RTNG_TOPICS_COUNT', (int) $topics_count),
+		], true, 'change');
 
-		$this->fill_template($icons, $tpl_loopname, $topic_tracking_info, $topics_count, $topic_list);
+		$this->fill_template($icons, $tpl_loopname, $start_param, $topic_tracking_info, $topics_count, $topic_list);
+	}
+
+	/**
+	 * Get the ids of the given forums including all their subforums
+	 */
+	private function get_section_forum_ids(array $forum_ids): array
+	{
+		$sql_array = [
+			'SELECT'	=> 'f2.forum_id',
+			'FROM'		=> [FORUMS_TABLE => 'f1'],
+			'LEFT_JOIN'	=> [
+				[
+					'FROM' => [FORUMS_TABLE => 'f2'],
+					'ON'   => 'f2.left_id BETWEEN f1.left_id AND f1.right_id',
+				],
+			],
+			'WHERE'		=> $this->db->sql_in_set('f1.forum_id', $forum_ids),
+		];
+
+		$sql	= $this->db->sql_build_query('SELECT', $sql_array);
+		$result = $this->db->sql_query($sql, 600);
+		$rows	= $this->db->sql_fetchrowset($result);
+		$this->db->sql_freeresult($result);
+
+		return array_unique(array_map('intval', array_column($rows, 'forum_id')));
 	}
 
 	/**
@@ -435,8 +504,10 @@ class rtng_functions
 	/**
 	 * Set template vars
 	 */
-	private function fill_template(array $icons, string $tpl_loopname, array $topic_tracking_info, int $topics_count, array $topic_list): void
+	private function fill_template(array $icons, string $section_loopname, string $start_param, array $topic_tracking_info, int $topics_count, array $topic_list): void
 	{
+		$tpl_loopname = $section_loopname . '.topics';
+
 		// get topics from db
 		$rowset = $this->get_topics_sql($topic_list);
 		$topic_icons = [];
@@ -654,7 +725,7 @@ class rtng_functions
 
 			// Get URL-parameters for pagination
 			parse_str($this->user->page['query_string'], $append_params);
-			unset($append_params[$tpl_loopname . '_start']);
+			unset($append_params[$start_param]);
 
 			// Fix MSSTI Advanced BBCode MOD
 			foreach ($append_params as $key => $value)
@@ -666,12 +737,12 @@ class rtng_functions
 			}
 
 			$pagination_url = append_sid($this->root_path . $this->user->page['page_name'], $append_params);
-			$this->pagination->generate_template_pagination($pagination_url, 'pagination',
-				$tpl_loopname . '_start', $topics_count, $this->topics_per_page, $this->topics_start);
+			$this->pagination->generate_template_pagination($pagination_url, $section_loopname . '.pagination',
+				$start_param, $topics_count, $this->topics_per_page, $this->topics_start);
 
-			$this->template->assign_vars([
-				'S_RTNG_TOPIC_ICONS' => (bool) $topic_icons,
-			]);
+			$this->template->alter_block_array($section_loopname, [
+				'S_TOPIC_ICONS' => (bool) $topic_icons,
+			], true, 'change');
 		} // topics found
 	}
 

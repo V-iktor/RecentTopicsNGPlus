@@ -1,0 +1,31 @@
+{#
+ *
+ * Recent Topics NG. An extension for the phpBB Forum Software package.
+ *
+ * @copyright (c) 2022, IMC, https://github.com/IMC-GER / LukeWCS, https://github.com/LukeWCS
+ * @copyright (c) 2017, Sajaki, https://www.avathar.be
+ * @copyright (c) 2015, PayBas
+ * @license GNU General Public License, version 2 (GPL-2.0-only)
+ *
+ * Based on the original NV Recent Topics by Joas Schilling (nickvergessen)
+ #}
+
+{# Pagination of a single section, requires the loop var "section" #}
+<div class="pagination rtng-pagination">
+	{{ section.TOPICS_COUNT }}
+	<ul>
+	{% for pagination in section.pagination %}
+		{% if pagination.S_IS_PREV %}
+			<li class="arrow previous"><a class="button button-icon-only" href="{{ pagination.PAGE_URL }}" rel="prev" role="button"><i class="icon fa-chevron-{{ S_CONTENT_FLOW_BEGIN }} fa-fw" aria-hidden="true"></i><span class="sr-only">{{ lang('PREVIOUS') }}</span></a></li>
+		{% elseif pagination.S_IS_CURRENT %}
+			<li class="active"><span>{{ pagination.PAGE_NUMBER }}</span></li>
+		{% elseif pagination.S_IS_ELLIPSIS %}
+			<li class="ellipsis" role="separator"><span>{{ lang('ELLIPSIS') }}</span></li>
+		{% elseif pagination.S_IS_NEXT %}
+			<li class="arrow next"><a class="button button-icon-only" href="{{ pagination.PAGE_URL }}" rel="next" role="button"><i class="icon fa-chevron-{{ S_CONTENT_FLOW_END }} fa-fw" aria-hidden="true"></i><span class="sr-only">{{ lang('NEXT') }}</span></a></li>
+		{% else %}
+			<li><a class="button" href="{{ pagination.PAGE_URL }}" role="button">{{ pagination.PAGE_NUMBER }}</a></li>
+		{% endif %}
+	{% endfor %}
+	</ul>
+</div>

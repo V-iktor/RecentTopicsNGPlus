@@ -87,6 +87,25 @@
 	</fieldset>
 
 	<fieldset>
+		<legend>{{ lang('RTNG_SECTIONS') }}</legend>
+		<p>{{ lang('RTNG_SECTIONS_EXP') }}</p>
+
+		<div id="rtng_section_list">
+			{% for section in rtng_sections %}
+				{{ _self.section(section.ID, section.TITLE, section.forums) }}
+			{% endfor %}
+		</div>
+
+		<template id="rtng_section_template">
+			{{ _self.section('__ID__', '', rtng_forum_options) }}
+		</template>
+
+		<p>
+			<input type="button" class="button2" id="rtng_section_add" value="{{ lang('RTNG_SECTION_ADD') }}" data-next-id="{{ RTNG_SECTION_NEXT_ID }}">
+		</p>
+	</fieldset>
+
+	<fieldset>
 		<legend>{{ lang('RTNG_OVERRIDABLE') }}</legend>
 		<p>{{ lang('RTNG_OVERRIDABLE_EXPLAIN', U_SERVER_LOAD) }}</p>
 
@@ -138,5 +157,44 @@
 			<input type="button" class="button1" name="lukewcs_confirmbox_yes" value="{{ lang('YES') }}">&nbsp;
 			<input type="button" class="button2" name="lukewcs_confirmbox_no" value="{{ lang('NO') }}">
 		</p>
+	</div>
+{%- endmacro %}
+
+{% macro section(id, title, forums) -%}
+	<div class="rtng-section-row" data-id="{{ id }}">
+		<hr>
+		<dl>
+			<dt>
+				<label for="rtng_section_title_{{ id }}">{{ lang('RTNG_SECTION_TITLE') ~ lang('COLON') }}</label><br>
+				<span>{{ lang('RTNG_SECTION_TITLE_EXP') }}</span>
+			</dt>
+			<dd>
+				<input type="text" id="rtng_section_title_{{ id }}" name="rtng_section_title[{{ id }}]" value="{{ title }}" size="40" maxlength="255" placeholder="{{ lang('RTNG_TITLE') }}">
+			</dd>
+		</dl>
+		<dl>
+			<dt>
+				<label for="rtng_section_forums_{{ id }}">{{ lang('RTNG_SECTION_FORUMS') ~ lang('COLON') }}</label><br>
+				<span>{{ lang('RTNG_SECTION_FORUMS_EXP') }}</span>
+			</dt>
+			<dd>
+				<select id="rtng_section_forums_{{ id }}" name="rtng_section_forums[{{ id }}][]" size="8" multiple>
+					{% for forum in forums %}
+						<option value="{{ forum.FORUM_ID }}"{{
+							(forum.S_IS_CAT ? ' class="sep"') ~
+							(forum.S_SELECTED ? ' selected')
+						}}>{{ forum.PADDING }}{{ forum.FORUM_NAME }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt></dt>
+			<dd>
+				<input type="button" class="button2" data-rtng-action="up" value="{{ lang('RTNG_SECTION_UP') }}">
+				<input type="button" class="button2" data-rtng-action="down" value="{{ lang('RTNG_SECTION_DOWN') }}">
+				<input type="button" class="button2" data-rtng-action="delete" value="{{ lang('RTNG_SECTION_DELETE') }}">
+			</dd>
+		</dl>
 	</div>
 {%- endmacro %}

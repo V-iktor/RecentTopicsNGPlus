@@ -77,6 +77,18 @@ $lang = array_merge($lang, [
 	'RTNG_SIMPLE_PAGE_QTY'			=> 'Anzahl der Seiten in der vereinfachten Anzeige',
 	'RTNG_SIMPLE_PAGE_QTY_EXP'		=> 'Damit kannst du für die vereinfachte Anzeige festlegen, wie viele Listen-Seiten maximal angezeigt werden sollen.',
 
+
+	// Sections
+	'RTNG_SECTIONS'					=> 'Bereiche',
+	'RTNG_SECTIONS_EXP'				=> 'Die aktuellen Themen können in mehrere Bereiche aufgeteilt werden. Jeder Bereich hat einen eigenen Titel, zeigt die Themen der ausgewählten Foren an und wird unabhängig von den anderen Bereichen geblättert. Die Bereiche werden in der hier angezeigten Reihenfolge dargestellt.',
+	'RTNG_SECTION_TITLE'			=> 'Titel des Bereichs',
+	'RTNG_SECTION_TITLE_EXP'		=> 'Leer lassen, um den Standardtitel zu verwenden.',
+	'RTNG_SECTION_FORUMS'			=> 'Foren',
+	'RTNG_SECTION_FORUMS_EXP'		=> 'Wähle die Foren oder Kategorien aus, deren Themen in diesem Bereich angezeigt werden. Unterforen eines ausgewählten Forums oder einer Kategorie werden eingeschlossen. Wähle nichts aus, um alle Foren anzuzeigen.<br>Foren, bei denen die Anzeige in „Recent Topics NG“ deaktiviert ist, werden nie angezeigt.',
+	'RTNG_SECTION_ADD'				=> 'Bereich hinzufügen',
+	'RTNG_SECTION_UP'				=> 'Nach oben',
+	'RTNG_SECTION_DOWN'				=> 'Nach unten',
+	'RTNG_SECTION_DELETE'			=> 'Bereich löschen',
 	// User Overridable settings. these apply for anon users and can be overridden by UCP
 	'RTNG_OVERRIDABLE'				=> 'Einstellungen, die im Benutzerkontrollzentrum geändert werden können',
 	'RTNG_OVERRIDABLE_EXPLAIN'		=> 'Damit der Benutzer diese Einstellungen im Benutzerkontrollzentrum verändern kann, muss ihm in der Rechteverwaltung das entsprechende Benutzerrecht zugewiesen werden. Hat er dieses Recht nicht, werden für ihn diese Standardeinstellungen angewendet. Diese Werte werden auch für neue Benutzer und Gäste gesetzt.<br><br>Damit der Titel, Autor und das Beitragsdatum des ersten ungelesenen Beitrags als Anzeige im Thementitel ausgewählt werden kann, muss diese Option in den Einstellungen der <u><a href="%s">Serverlast</a></u> aktiviert werden.',
