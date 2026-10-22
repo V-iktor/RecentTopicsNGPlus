@@ -103,10 +103,49 @@ class admin_controller
 			'RTNG_SIMPLE_PAGE_QTY'			=> (int) $this->config['rtng_simple_page_qty'],
 		]);
 
+		$this->set_template_vars_sections();
+
 		// Read guest account settings as default and setting template vars
 		$user_data		= $this->ctrl_common->get_rtng_user_data(ANONYMOUS);
 		$template_vars	= $this->ctrl_common->get_user_set_template_vars(ANONYMOUS, $user_data);
 		$this->template->assign_vars($template_vars);
+	}
+
+	/**
+	 * Set template variables for the recent topics sections
+	 */
+	protected function set_template_vars_sections(): void
+	{
+		if (!function_exists('make_forum_select'))
+		{
+			include($this->phpbb_root_path . 'includes/functions_admin.' . $this->phpEx);
+		}
+
+		$forum_list = make_forum_select(false, false, true, false, false, false, true);
+		$next_id	= (int) $this->config['rtng_section_next_id'];
+
+		foreach ($forum_list as $forum_id => $forum)
+		{
+			$this->template->assign_block_vars('rtng_forum_options', [
+				'FORUM_ID'		=> $forum_id,
+				'FORUM_NAME'	=> $forum['forum_name'],
+				'PADDING'		=> $forum['padding'],
+				'S_IS_CAT'		=> $forum['forum_type'] == FORUM_CAT,
+			]);
+		}
+
+		foreach ($this->ctrl_common->get_sections() as $section)
+		{
+			$next_id = max($next_id, $section['id'] + 1);
+
+			$this->template->assign_block_vars('rtng_sections', [
+				'ID'		=> $section['id'],
+				'TITLE'		=> $section['title'],
+				'FORUM_IDS'	=> $section['forums'],
+			]);
+		}
+
+		$this->template->assign_var('RTNG_SECTION_NEXT_ID', $next_id);
 	}
 
 	/**
@@ -119,6 +158,8 @@ class admin_controller
 		$this->config->set('rtng_parents', $this->request->variable('rtng_parents', 0));
 		$this->config->set('rtng_simple_topics_qty', $this->request->variable('rtng_simple_topics_qty', 5));
 		$this->config->set('rtng_simple_page_qty', $this->request->variable('rtng_simple_page_qty', 3));
+
+		$this->set_vars_sections();
 
 		// Variable should be a string ("1234,2457,3928").
 		$rtng_anti_topics = $this->request->variable('rtng_anti_topics', '');
@@ -133,6 +174,44 @@ class admin_controller
 		{
 			$this->config->set('rtng_anti_topics', '0');
 		}
+	}
+
+	/**
+	 * Store the recent topics sections, the order of the form is the display order
+	 */
+	protected function set_vars_sections(): void
+	{
+		$titles	  = $this->request->variable('rtng_section_title', [0 => ''], true);
+		$forums	  = $this->request->variable('rtng_section_forums', [0 => [0]]);
+		$sections = [];
+
+		foreach ($titles as $id => $title)
+		{
+			if ((int) $id < 1)
+			{
+				continue;
+			}
+
+			$sections[] = [
+				'id'	 => (int) $id,
+				'title'	 => trim($title),
+				'forums' => array_values(array_unique(array_filter(array_map('intval', $forums[$id] ?? [])))),
+			];
+		}
+
+		// At least one section is required
+		if (!count($sections))
+		{
+			$sections[] = ['id' => (int) $this->config['rtng_section_next_id'], 'title' => '', 'forums' => []];
+		}
+
+		$this->ctrl_common->set_sections($sections);
+
+		// Ids of deleted sections are never used again, so links and collapsed states stay unique
+		$next_id = max(array_merge([(int) $this->config['rtng_section_next_id']], array_map(function ($section) {
+			return $section['id'] + 1;
+		}, $sections)));
+		$this->config->set('rtng_section_next_id', $next_id);
 	}
 
 	/**

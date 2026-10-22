@@ -53,16 +53,10 @@ class main_listener implements EventSubscriberInterface
 	public function display_forums_before(): void
 	{
 		// support for phpbb collapsable categories extension
+		// each section gets its own collapsible element
 		if (isset($this->collapsable_categories))
 		{
-			$rtng_cc	= [];
-			$fid		= 'fid_rtng'; // can be any unique string to identify the collapsible element of your extension.
-			$rtng_cc[]	= [
-				'S_FORUM_HIDDEN' => $this->collapsable_categories->is_collapsed($fid),
-				'U_COLLAPSE_URL' => $this->collapsable_categories->get_collapsible_link($fid),
-			];
-
-			$this->template->assign_vars(['rtng_cc' => $rtng_cc]);
+			$this->rtng_functions->set_collapsible_categories($this->collapsable_categories);
 		}
 	}
 

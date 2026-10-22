@@ -30,13 +30,13 @@
 }
 
 @media only screen and (max-width: 700px) {
-	#rtng-box .panel {
+	.rtng-box .panel {
 		margin-left: unset;
 		margin-right: unset;
 	}
 }
 
-#rtng-box .panel {
+.rtng-box .panel {
 	margin-bottom: unset;
 	border-radius: unset;
 }
@@ -45,32 +45,32 @@
 	font-size: 1.32em;
 } 
 
-#rtng ul {
+.rtng-box .rtng-list ul {
 	list-style: none;
 }
 
-#rtng li.row {
+.rtng-box .rtng-list li.row {
 	border-top: none;
 	border-bottom-color: #222;
 	transition: background 0.15s ease-in-out 0s;
 }
 
-#rtng li dl.icon {
+.rtng-box .rtng-list li dl.icon {
 	padding-bottom: 0px;
 }
 
-#rtng li.row dl {
+.rtng-box .rtng-list li.row dl {
 	padding: 9px 5px 5px 0;
 	position: relative;
 }
 
-#rtng li.row dl:after {
+.rtng-box .rtng-list li.row dl:after {
 	clear: both;
 	content: "";
 	display: block;
 }
 
-#rtng a.topictitle {
+.rtng-box .rtng-list a.topictitle {
 	display: block;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -78,12 +78,12 @@
 	margin-bottom: 1px;
 }
 
-#rtng a.forum-link {
+.rtng-box .rtng-list a.forum-link {
 	color: #877b69;
 	font-size: 1.1em;
 }
 
-#rtng dd.lastpost {
+.rtng-box .rtng-list dd.lastpost {
 	bottom: 3px;
 	right: 5px;
 	line-height: normal;
@@ -93,19 +93,19 @@
 	text-align: right;
 }
 
-#rtng dl {
+.rtng-box .rtng-list dl {
 	position: relative;
 }
 
-#rtng dd.status-icons {
+.rtng-box .rtng-list dd.status-icons {
 	position: absolute;
 	top: 3px;
 	right: 5px;
 	min-height: inherit;
 }
 
-#rtng dd.status-icons > a,
-#rtng dd.status-icons > span {
+.rtng-box .rtng-list dd.status-icons > a,
+.rtng-box .rtng-list dd.status-icons > span {
 	float: right;
 	margin-left: 2px;
 }
@@ -118,4 +118,14 @@
 #rtng-bottom .forabg + .action-bar,
 #rtng-separate .forabg + .action-bar {
 	margin-top: 4px;
+}
+
+.rtng-section + .rtng-section {
+	margin-top: 1em;
+}
+
+.rtng-section.rtng-loading {
+	opacity: 0.5;
+	pointer-events: none;
+	transition: opacity 0.15s ease-in-out;
 }
